@@ -1,0 +1,106 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  source:
+    id: ubuntu-desktop-minimal
+
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  timezone: America/Los_Angeles
+
+  network:
+    version: 2
+    ethernets:
+      enp1s0:
+        dhcp4: true
+
+  identity:
+    hostname: m715q
+    username: bryborge
+    # This is the SHA-512 hash for the temporary password: "supersecret"
+    password: '$6$oaQMy5NtjM6ZjSD9$owCQ7NjUV1a7ZLkkieQAsDNqNtsQ7yZDx4SjUzwyjAL8gn1hovt6Xqg4B9fs3ql0kq3ynxynbyoTh/33zAOHi/'
+
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys: []
+
+  storage:
+    config:
+      # Disk configuration -----------------------------------------------------
+      - type: disk
+        id: disk0
+        ptable: gpt
+        match:
+          size: largest
+        wipe: superblock
+
+      # EFI partition ----------------------------------------------------------
+      - type: partition
+        id: efipart
+        device: disk0
+        size: 2G
+        flag: boot
+        grub_device: true
+        wipe: superblock
+      - type: format
+        id: efipart_fs
+        fstype: fat32
+        volume: efipart
+      - type: mount
+        id: efipart_mount
+        path: /boot/efi
+        device: efipart_fs
+
+      # SWAP partition ---------------------------------------------------------
+      - type: partition
+        id: swappart
+        device: disk0
+        size: 4G
+        flag: swap
+        wipe: superblock
+      - type: format
+        id: swappart_fs
+        fstype: swap
+        volume: swappart
+      - type: mount
+        id: swappart_mount
+        path: none
+        device: swappart_fs
+
+      # OPT partition ----------------------------------------------------------
+      - type: partition
+        id: optpart
+        device: disk0
+        size: 20G
+        wipe: superblock
+      - type: format
+        id: optpart_fs
+        volume: optpart
+        fstype: ext4
+      - type: mount
+        id: optpart_mount
+        path: /opt
+        device: optpart_fs
+
+      # ROOT partition ---------------------------------------------------------
+      - type: partition
+        id: rootpart
+        device: disk0
+        size: -1
+        wipe: superblock
+      - type: format
+        id: rootpart_fs
+        volume: rootpart
+        fstype: ext4
+      - type: mount
+        id: rootpart_mount
+        path: /
+        device: rootpart_fs
+
+  late-commands:
+    - curtin in-target --target=/target -- systemctl enable ssh
+
+  shutdown: poweroff

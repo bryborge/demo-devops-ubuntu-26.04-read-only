@@ -1,0 +1,14 @@
+---
+- name: Rotate admin user password
+  hosts: workstations
+  become: true
+  vars_prompt:
+    - name: raw_production_password
+      prompt: "Enter the NEW secure password for the admin user"
+      private: true
+      confirm: true
+  tasks:
+    - name: Rotate password
+      ansible.builtin.user:
+        name: bryborge
+        password: "{{ raw_production_password | password_hash('sha512') }}"

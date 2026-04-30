@@ -1,0 +1,45 @@
+---
+- name: Install and Enable Overlayroot
+  hosts: workstations
+  become: true
+  tasks:
+    - name: Install overlayroot package
+      ansible.builtin.apt:
+        name: overlayroot
+        state: present
+        update_cache: true
+
+    - name: Configure overlayroot settings
+      ansible.builtin.lineinfile:
+        path: /etc/overlayroot.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+        insertafter: EOF
+        create: true
+      loop:
+        - regexp: '^overlayroot_cfgdisk=.*'
+          line: 'overlayroot_cfgdisk=""'
+        - regexp: '^overlayroot=.*'
+          line: 'overlayroot="tmpfs:swap=1,recurse=0"'
+
+    - name: Ensure overlayroot is configured in grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT=.*'
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash overlayroot=tmpfs"'
+        state: present
+      notify:
+        - run dracut
+        - update grub
+        - reboot machine
+
+  handlers:
+    - name: update grub
+      ansible.builtin.command: update-grub
+
+    - name: run dracut
+      ansible.builtin.command: dracut -f
+
+    - name: reboot machine
+      ansible.builtin.reboot:

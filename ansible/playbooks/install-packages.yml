@@ -1,0 +1,42 @@
+---
+- name: Install packages
+  hosts: workstations
+  become: true
+  tasks:
+    - name: Turn off overlayroot in grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT=.*'
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash overlayroot=0"'
+      notify:
+        - update grub
+        - reboot machine
+
+    - name: Flush handlers to reboot before installation
+      meta: flush_handlers
+
+    - name: Install requested packages
+      ansible.builtin.apt:
+        pkg:
+          - git
+          - direnv
+          - pyenv
+          - vim
+        state: present
+        update_cache: yes
+
+    - name: Re-enable overlayroot in grub
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT=.*'
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash overlayroot=tmpfs"'
+      notify:
+        - update grub
+        - reboot machine
+
+  handlers:
+    - name: update grub
+      ansible.builtin.command: update-grub
+
+    - name: reboot machine
+      ansible.builtin.reboot:
