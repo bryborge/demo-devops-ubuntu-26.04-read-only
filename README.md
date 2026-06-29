@@ -34,6 +34,7 @@ machine running in a university laboratory environment.
 ### Requirements
 
 - Python (see `.python-version` file for specific Python version)
+- 2x USB storage drives (for autoinstall and initial system bootstrapping)
 
 ### 1. Bootstrapping the System
 
@@ -49,8 +50,6 @@ machine running in a university laboratory environment.
 Once the installation is complete, the computer will power off.
 
 #### Provisioning
-
-<!-- TODO: Script this stuff for QOL. -->
 
 1.  Install the Python dependencies for Ansible:
 
@@ -87,7 +86,7 @@ ansible-playbook -i ansible/inventory.ini ansible/playbooks/update-system.yml
 
 ### Testing and Linting
 
-We use `yamllint` to ensure our Ansible playbooks and configuration files are properly formatted. 
+We use `yamllint` to ensure our Ansible playbooks and configuration files are properly formatted.
 
 To run the linter across all YAML files in the repository:
 
